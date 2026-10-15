@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Reading Log</title>
+<meta name="theme-color" content="#1f3a34">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<style>
+  :root {
+    --bg: #f6f3ec; --card: #ffffff; --ink: #1d1d1b; --muted: #6b6a64;
+    --accent: #1f3a34; --accent-ink: #ffffff; --line: #e4dfd4; --bar: #c9a45c;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #141614; --card: #1d201e; --ink: #ecebe6; --muted: #a09f98;
+            --accent: #8fc1ad; --accent-ink: #10201b; --line: #2d312e; --bar: #c9a45c; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+         padding: max(16px, env(safe-area-inset-top)) 16px 32px; }
+  main { max-width: 480px; margin: 0 auto; }
+  h1 { font-size: 1.6rem; margin: 8px 0 2px; letter-spacing: -0.01em; }
+  .sub { color: var(--muted); margin: 0 0 20px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+          padding: 16px; margin-bottom: 16px; }
+  label { display: block; font-size: .85rem; color: var(--muted); margin-bottom: 6px; }
+  input { width: 100%; font: inherit; color: var(--ink); background: var(--bg);
+          border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  .quick { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .chip { flex: 1; min-width: 56px; padding: 10px 0; border-radius: 999px; font: inherit;
+          border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+  .primary { width: 100%; padding: 14px; font: inherit; font-weight: 600; border: 0;
+             border-radius: 12px; background: var(--accent); color: var(--accent-ink); }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; }
+  .stat b { display: block; font-size: 1.35rem; }
+  .stat span { font-size: .8rem; color: var(--muted); }
+  .bars { display: flex; align-items: flex-end; gap: 6px; height: 90px; margin-top: 16px; }
+  .bars div { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
+              height: 100%; justify-content: flex-end; font-size: .7rem; color: var(--muted); }
+  .bars i { display: block; width: 100%; background: var(--bar); border-radius: 6px 6px 2px 2px; min-height: 2px; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li { display: flex; justify-content: space-between; align-items: center; padding: 10px 0;
+       border-bottom: 1px solid var(--line); }
+  li:last-child { border-bottom: 0; }
+  li button { background: none; border: 0; color: var(--muted); font-size: 1.1rem; padding: 4px 8px; }
+  .empty { color: var(--muted); text-align: center; padding: 8px 0; }
+  .backup { display: flex; gap: 8px; }
+  .backup button, .backup label.btn { flex: 1; text-align: center; padding: 12px; font: inherit;
+          border: 1px solid var(--line); border-radius: 12px; background: var(--card); color: var(--ink);
+          margin: 0; font-size: .95rem; }
+  h2 { font-size: 1rem; margin: 0 0 10px; }
+  #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink);
+           color: var(--bg); padding: 10px 16px; border-radius: 999px; opacity: 0; transition: opacity .2s;
+           pointer-events: none; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Reading Log</h1>
+  <p class="sub">Minutes read, day by day.</p>
+
+  <section class="card">
+    <div class="row">
+      <div><label for="date">Day</label><input id="date" type="date"></div>
+      <div><label for="mins">Minutes</label><input id="mins" type="number" inputmode="numeric" min="0" max="1440" placeholder="0"></div>
+    </div>
+    <div class="quick">
+      <button class="chip" data-add="10">+10</button>
+      <button class="chip" data-add="15">+15</button>
+      <button class="chip" data-add="30">+30</button>
+      <button class="chip" data-add="60">+60</button>
+    </div>
+    <button class="primary" id="save">Save</button>
+  </section>
+
+  <section class="card">
+    <div class="stats">
+      <div class="stat"><b id="sToday">0</b><span>today (min)</span></div>
+      <div class="stat"><b id="sWeek">0</b><span>last 7 days</span></div>
+      <div class="stat"><b id="sStreak">0</b><span>day streak</span></div>
+    </div>
+    <div class="bars" id="bars"></div>
+  </section>
+
+  <section class="card">
+    <h2>History</h2>
+    <ul id="list"></ul>
+  </section>
+
+  <section class="card">
+    <h2>Backup</h2>
+    <div class="backup">
+      <button id="export">Export</button>
+      <label class="btn" for="import">Import</label>
+      <input id="import" type="file" accept="application/json" hidden>
+    </div>
+  </section>
+</main>
+<div id="toast"></div>
+
+<script>
+const KEY = 'readingLog.v1';
+const $ = id => document.getElementById(id);
+
+// --- data: { "2026-10-15": 30, ... } stored on this phone only ---
+function load() {
+  try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; }
+}
+function store(data) {
+  try { localStorage.setItem(KEY, JSON.stringify(data)); return true; } catch { return false; }
+}
+let log = load();
+
+const iso = d => { const z = new Date(d); z.setMinutes(z.getMinutes() - z.getTimezoneOffset()); return z.toISOString().slice(0, 10); };
+const today = () => iso(new Date());
+const shift = (s, n) => { const d = new Date(s + 'T12:00'); d.setDate(d.getDate() + n); return iso(d); };
+const fmt = m => m >= 60 ? `${Math.floor(m / 60)} h ${m % 60} min` : `${m} min`;
+
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.style.opacity = 1; setTimeout(() => t.style.opacity = 0, 1600); }
+
+function render() {
+  const t = today();
+  $('sToday').textContent = log[t] || 0;
+  let week = 0; for (let i = 0; i < 7; i++) week += log[shift(t, -i)] || 0;
+  $('sWeek').textContent = week;
+  let streak = 0, d = log[t] ? t : shift(t, -1);
+  while (log[d] > 0) { streak++; d = shift(d, -1); }
+  $('sStreak').textContent = streak;
+
+  const days = [...Array(7)].map((_, i) => shift(t, i - 6));
+  const max = Math.max(30, ...days.map(x => log[x] || 0));
+  $('bars').innerHTML = days.map(x => {
+    const v = log[x] || 0, h = Math.round(v / max * 70);
+    const name = new Date(x + 'T12:00').toLocaleDateString(undefined, { weekday: 'narrow' });
+    return `<div title="${x}: ${v} min"><i style="height:${h}px"></i>${name}</div>`;
+  }).join('');
+
+  const keys = Object.keys(log).sort().reverse();
+  $('list').innerHTML = keys.length ? keys.map(k => {
+    const label = new Date(k + 'T12:00').toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+    return `<li><span>${label}</span><span>${fmt(log[k])} <button data-del="${k}" aria-label="Delete">✕</button></span></li>`;
+  }).join('') : '<li class="empty">No entries yet. Log your first session above.</li>';
+}
+
+function syncInput() { $('mins').value = log[$('date').value] || ''; }
+
+$('date').value = today();
+$('date').max = today();
+syncInput();
+$('date').addEventListener('change', syncInput);
+
+document.querySelectorAll('[data-add]').forEach(b => b.addEventListener('click', () => {
+  $('mins').value = (parseInt($('mins').value) || 0) + parseInt(b.dataset.add);
+}));
+
+$('save').addEventListener('click', () => {
+  const day = $('date').value, m = parseInt($('mins').value);
+  if (!day || isNaN(m) || m < 0 || m > 1440) return toast('Enter minutes (0–1440)');
+  if (m === 0) delete log[day]; else log[day] = m;
+  toast(store(log) ? 'Saved' : 'Could not save on this device');
+  render();
+});
+
+$('list').addEventListener('click', e => {
+  const k = e.target.dataset.del;
+  if (k && confirm(`Delete entry for ${k}?`)) { delete log[k]; store(log); syncInput(); render(); }
+});
+
+// --- backup: move your data to a new phone ---
+$('export').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify({ app: 'reading-log', version: 1, exported: new Date().toISOString(), log }, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = `reading-log-${today()}.json`; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+});
+
+$('import').addEventListener('change', async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const data = JSON.parse(await f.text());
+    const incoming = data.log || data;
+    let n = 0;
+    for (const [k, v] of Object.entries(incoming)) {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(k) && Number.isFinite(v) && v > 0) { log[k] = Math.round(v); n++; }
+    }
+    store(log); syncInput(); render(); toast(`Imported ${n} days`);
+  } catch { toast('That file is not a valid backup'); }
+  e.target.value = '';
+});
+
+// Ask the browser not to clear this data when storage runs low
+if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
+// Offline support + installable app
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+
+render();
+</script>
+</body>
+</html>
