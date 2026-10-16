@@ -1,40 +1,42 @@
 <!doctype html>
-<html lang="en">
+<html lang="ca">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Reading Log</title>
-<meta name="theme-color" content="#1f3a34">
+<title>Lectures</title>
+<meta name="theme-color" content="#000000">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <style>
+  /* Black background, white text (always, whatever the phone's theme) */
   :root {
-    --bg: #f6f3ec; --card: #ffffff; --ink: #1d1d1b; --muted: #6b6a64;
-    --accent: #1f3a34; --accent-ink: #ffffff; --line: #e4dfd4; --bar: #c9a45c;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg: #141614; --card: #1d201e; --ink: #ecebe6; --muted: #a09f98;
-            --accent: #8fc1ad; --accent-ink: #10201b; --line: #2d312e; --bar: #c9a45c; }
+    color-scheme: dark;   /* makes the date picker icon white too */
+    --bg: #000000; --card: #141414; --ink: #ffffff; --muted: #a3a3a3;
+    --accent: #ffffff; --accent-ink: #000000; --line: #2b2b2b; --bar: #ff8c69;   /* salmon orange */
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--ink);
          font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
          padding: max(16px, env(safe-area-inset-top)) 16px 32px; }
   main { max-width: 480px; margin: 0 auto; }
-  h1 { font-size: 1.6rem; margin: 8px 0 2px; letter-spacing: -0.01em; }
-  .sub { color: var(--muted); margin: 0 0 20px; }
+  h1 { font-size: 1.6rem; margin: 8px 0 20px; letter-spacing: -0.01em; }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px;
           padding: 16px; margin-bottom: 16px; }
   label { display: block; font-size: .85rem; color: var(--muted); margin-bottom: 6px; }
   input { width: 100%; font: inherit; color: var(--ink); background: var(--bg);
           border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
   .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
-  .quick { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
-  .chip { flex: 1; min-width: 56px; padding: 10px 0; border-radius: 999px; font: inherit;
-          border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
-  .primary { width: 100%; padding: 14px; font: inherit; font-weight: 600; border: 0;
-             border-radius: 12px; background: var(--accent); color: var(--accent-ink); }
-  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; }
+  .row label { text-align: center; }
+  /* White calendar icon in the date box */
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    color: transparent; opacity: 1; cursor: pointer; width: 18px; height: 18px;
+    background: no-repeat center / 18px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2'/%3E%3Cpath d='M16 2v4M8 2v4M3 10h18'/%3E%3C/svg%3E");
+  }
+  /* Save button: same width and height as one of the D / M boxes, centred */
+  .primary { display: block; width: calc((100% - 12px) / 2); margin: 0 auto; padding: 12px;
+             font: inherit; font-weight: 600; border: 1px solid var(--accent);
+             border-radius: 10px; background: var(--accent); color: var(--accent-ink); }
+  .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; text-align: center; }
   .stat b { display: block; font-size: 1.35rem; }
   .stat span { font-size: .8rem; color: var(--muted); }
   .bars { display: flex; align-items: flex-end; gap: 6px; height: 90px; margin-top: 16px; }
@@ -47,7 +49,11 @@
   li:last-child { border-bottom: 0; }
   li button { background: none; border: 0; color: var(--muted); font-size: 1.1rem; padding: 4px 8px; }
   .empty { color: var(--muted); text-align: center; padding: 8px 0; }
-  .backup { display: flex; gap: 8px; }
+  /* Half-width card, centred (used for the backup box) */
+  .card.half { width: 50%; min-width: 180px; margin-left: auto; margin-right: auto; padding: 12px; }
+  .card.half h2 { text-align: center; }
+  .backup { display: flex; gap: 6px; }
+  .card.half .backup button, .card.half .backup label.btn { padding: 10px 4px; font-size: .9rem; }
   .backup button, .backup label.btn { flex: 1; text-align: center; padding: 12px; font: inherit;
           border: 1px solid var(--line); border-radius: 12px; background: var(--card); color: var(--ink);
           margin: 0; font-size: .95rem; }
@@ -59,42 +65,34 @@
 </head>
 <body>
 <main>
-  <h1>Reading Log</h1>
-  <p class="sub">Minutes read, day by day.</p>
+  <h1>LECTURES</h1>
 
   <section class="card">
     <div class="row">
-      <div><label for="date">Day</label><input id="date" type="date"></div>
-      <div><label for="mins">Minutes</label><input id="mins" type="number" inputmode="numeric" min="0" max="1440" placeholder="0"></div>
+      <div><label for="date">D</label><input id="date" type="date"></div>
+      <div><label for="mins">M</label><input id="mins" type="number" inputmode="numeric" min="0" max="1440" placeholder="0"></div>
     </div>
-    <div class="quick">
-      <button class="chip" data-add="10">+10</button>
-      <button class="chip" data-add="15">+15</button>
-      <button class="chip" data-add="30">+30</button>
-      <button class="chip" data-add="60">+60</button>
-    </div>
-    <button class="primary" id="save">Save</button>
+    <button class="primary" id="save">Desa</button>
   </section>
 
   <section class="card">
     <div class="stats">
-      <div class="stat"><b id="sToday">0</b><span>today (min)</span></div>
-      <div class="stat"><b id="sWeek">0</b><span>last 7 days</span></div>
-      <div class="stat"><b id="sStreak">0</b><span>day streak</span></div>
+      <div class="stat"><b id="sAvg">0</b><span>mitjana 7 dies (min)</span></div>
+      <div class="stat"><b id="sStreak">0</b><span>dies seguits</span></div>
     </div>
     <div class="bars" id="bars"></div>
   </section>
 
   <section class="card">
-    <h2>History</h2>
+    <h2>Progrés</h2>
     <ul id="list"></ul>
   </section>
 
-  <section class="card">
-    <h2>Backup</h2>
+  <section class="card half">
+    <h2>Còpia</h2>
     <div class="backup">
-      <button id="export">Export</button>
-      <label class="btn" for="import">Import</label>
+      <button id="export">Exporta</button>
+      <label class="btn" for="import">Importa</label>
       <input id="import" type="file" accept="application/json" hidden>
     </div>
   </section>
@@ -102,7 +100,8 @@
 <div id="toast"></div>
 
 <script>
-const KEY = 'readingLog.v1';
+const KEY = 'readingLog.v1';   // keep this name so your saved days are not lost
+const LOCALE = 'ca-ES';
 const $ = id => document.getElementById(id);
 
 // --- data: { "2026-10-15": 30, ... } stored on this phone only ---
@@ -123,9 +122,9 @@ function toast(msg) { const t = $('toast'); t.textContent = msg; t.style.opacity
 
 function render() {
   const t = today();
-  $('sToday').textContent = log[t] || 0;
+  // average of the last 7 days (today included; days without reading count as 0)
   let week = 0; for (let i = 0; i < 7; i++) week += log[shift(t, -i)] || 0;
-  $('sWeek').textContent = week;
+  $('sAvg').textContent = Math.round(week / 7);
   let streak = 0, d = log[t] ? t : shift(t, -1);
   while (log[d] > 0) { streak++; d = shift(d, -1); }
   $('sStreak').textContent = streak;
@@ -134,15 +133,15 @@ function render() {
   const max = Math.max(30, ...days.map(x => log[x] || 0));
   $('bars').innerHTML = days.map(x => {
     const v = log[x] || 0, h = Math.round(v / max * 70);
-    const name = new Date(x + 'T12:00').toLocaleDateString(undefined, { weekday: 'narrow' });
+    const name = new Date(x + 'T12:00').toLocaleDateString(LOCALE, { weekday: 'narrow' });
     return `<div title="${x}: ${v} min"><i style="height:${h}px"></i>${name}</div>`;
   }).join('');
 
   const keys = Object.keys(log).sort().reverse();
   $('list').innerHTML = keys.length ? keys.map(k => {
-    const label = new Date(k + 'T12:00').toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
-    return `<li><span>${label}</span><span>${fmt(log[k])} <button data-del="${k}" aria-label="Delete">✕</button></span></li>`;
-  }).join('') : '<li class="empty">No entries yet. Log your first session above.</li>';
+    const label = new Date(k + 'T12:00').toLocaleDateString(LOCALE, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+    return `<li><span>${label}</span><span>${fmt(log[k])} <button data-del="${k}" aria-label="Esborra">✕</button></span></li>`;
+  }).join('') : '<li class="empty">Encara no hi ha cap registre. Anota la teva primera sessió a dalt.</li>';
 }
 
 function syncInput() { $('mins').value = log[$('date').value] || ''; }
@@ -152,28 +151,24 @@ $('date').max = today();
 syncInput();
 $('date').addEventListener('change', syncInput);
 
-document.querySelectorAll('[data-add]').forEach(b => b.addEventListener('click', () => {
-  $('mins').value = (parseInt($('mins').value) || 0) + parseInt(b.dataset.add);
-}));
-
 $('save').addEventListener('click', () => {
   const day = $('date').value, m = parseInt($('mins').value);
-  if (!day || isNaN(m) || m < 0 || m > 1440) return toast('Enter minutes (0–1440)');
+  if (!day || isNaN(m) || m < 0 || m > 1440) return toast('Introdueix els minuts (0–1440)');
   if (m === 0) delete log[day]; else log[day] = m;
-  toast(store(log) ? 'Saved' : 'Could not save on this device');
+  toast(store(log) ? 'Desat' : "No s'ha pogut desar en aquest dispositiu");
   render();
 });
 
 $('list').addEventListener('click', e => {
   const k = e.target.dataset.del;
-  if (k && confirm(`Delete entry for ${k}?`)) { delete log[k]; store(log); syncInput(); render(); }
+  if (k && confirm(`Vols esborrar el registre del ${k}?`)) { delete log[k]; store(log); syncInput(); render(); }
 });
 
 // --- backup: move your data to a new phone ---
 $('export').addEventListener('click', () => {
   const blob = new Blob([JSON.stringify({ app: 'reading-log', version: 1, exported: new Date().toISOString(), log }, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob); a.download = `reading-log-${today()}.json`; a.click();
+  a.href = URL.createObjectURL(blob); a.download = `lectures-${today()}.json`; a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 });
 
@@ -186,15 +181,15 @@ $('import').addEventListener('change', async e => {
     for (const [k, v] of Object.entries(incoming)) {
       if (/^\d{4}-\d{2}-\d{2}$/.test(k) && Number.isFinite(v) && v > 0) { log[k] = Math.round(v); n++; }
     }
-    store(log); syncInput(); render(); toast(`Imported ${n} days`);
-  } catch { toast('That file is not a valid backup'); }
+    store(log); syncInput(); render(); toast(`S'han importat ${n} dies`);
+  } catch { toast('Aquest fitxer no és una còpia vàlida'); }
   e.target.value = '';
 });
 
 // Ask the browser not to clear this data when storage runs low
 if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
 // Offline support + installable app
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 
 render();
 </script>
